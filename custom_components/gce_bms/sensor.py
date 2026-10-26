@@ -220,7 +220,8 @@ async def async_setup_entry(
                 for sensor in range(1, (temps_per_module or len(data.temperatures)) + 1)
             )
         entities.extend(
-            GceBmsRankedCellSensor(cells, highest, rank)
+            cls(cells, highest, rank)
+            for cls in (GceBmsRankedCellSensor, GceBmsRankedCellPositionSensor)
             for highest in (False, True)
             for rank in range(1, RANKED_CELLS + 1)
         )
@@ -332,3 +333,29 @@ class GceBmsRankedCellSensor(GceBmsEntity[GceBmsCellCoordinator], SensorEntity):
         if (cell := self._cell()) is None:
             return None
         return {"module": cell[1], "cell": cell[2]}
+
+
+class GceBmsRankedCellPositionSensor(GceBmsRankedCellSensor):
+    """Which cell is the n-th lowest or highest, as "M<module>/C<cell>" for a readable history."""
+
+    _attr_device_class = None
+    _attr_state_class = None
+    _attr_native_unit_of_measurement = None
+    _attr_suggested_display_precision = None
+
+    def __init__(self, coordinator: GceBmsCellCoordinator, highest: bool, rank: int) -> None:
+        super().__init__(coordinator, highest, rank)
+        key = f"{self._attr_translation_key}_position"
+        self._attr_translation_key = key
+        self._attr_unique_id = f"{coordinator.config_entry.unique_id}_{key}_{rank}"
+
+    @property
+    def native_value(self) -> str | None:
+        cell = self._cell()
+        return f"M{cell[1]}/C{cell[2]}" if cell else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        if (cell := self._cell()) is None:
+            return None
+        return {"module": cell[1], "cell": cell[2], "voltage": cell[0]}

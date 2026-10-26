@@ -78,6 +78,7 @@ The gateway must run in **Modbus TCP** mode (Modbus TCP ↔ RTU conversion), RS4
 | Module *n* cell *nn* | V | one per cell |
 | Module *n* temperature *nn* | °C | one per probe, disabled by default |
 | Lowest cell 1–5 / Highest cell 1–5 | V | the five lowest and five highest cells of the cabinet; attributes `module`, `cell` |
+| Lowest / Highest cell 1–5 position | – | which cell holds that rank, e.g. `M3/C28` (module 3, cell 28); its history shows when the weakest / strongest cell changed |
 
 Recording 200 cell sensors creates a lot of history. To keep the database small, exclude them from the recorder or lengthen the cell polling interval in the integration options.
 

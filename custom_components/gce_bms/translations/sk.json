@@ -179,6 +179,12 @@
       },
       "cell_highest": {
         "name": "Najvyšší článok {rank}"
+      },
+      "cell_lowest_position": {
+        "name": "Najnižší článok {rank} – poloha"
+      },
+      "cell_highest_position": {
+        "name": "Najvyšší článok {rank} – poloha"
       }
     }
   }

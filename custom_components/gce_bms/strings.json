@@ -179,6 +179,12 @@
       },
       "cell_highest": {
         "name": "Highest cell {rank}"
+      },
+      "cell_lowest_position": {
+        "name": "Lowest cell {rank} position"
+      },
+      "cell_highest_position": {
+        "name": "Highest cell {rank} position"
       }
     }
   }
