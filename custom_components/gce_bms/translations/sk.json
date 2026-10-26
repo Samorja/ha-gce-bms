@@ -9,13 +9,15 @@
           "port": "Port",
           "unit_id": "Modbus adresa (číslo skrine)",
           "module_count": "Počet modulov",
-          "cells_per_module": "Počet článkov v module"
+          "cells_per_module": "Počet článkov v module",
+          "temperatures_per_module": "Počet teplotných senzorov v module"
         },
         "data_description": {
           "host": "IP adresa prevodníka RS485/Ethernet.",
           "unit_id": "Skriňa 1 = adresa 1, skriňa 2 = adresa 2 atď.",
           "module_count": "0 = zistiť automaticky (jeden modul na každú funkčnú BMU).",
-          "cells_per_module": "0 = zistiť automaticky (články, ktoré hlásia napätie)."
+          "cells_per_module": "0 = zistiť automaticky (články, ktoré hlásia napätie).",
+          "temperatures_per_module": "0 = zistiť automaticky (senzory, ktoré hlásia hodnotu)."
         }
       },
       "reconfigure": {
@@ -45,13 +47,15 @@
           "scan_interval": "Interval čítania",
           "cell_scan_interval": "Interval čítania článkov",
           "module_count": "Počet modulov",
-          "cells_per_module": "Počet článkov v module"
+          "cells_per_module": "Počet článkov v module",
+          "temperatures_per_module": "Počet teplotných senzorov v module"
         },
         "data_description": {
           "scan_interval": "Napätie, prúd, SOC, alarmy a ďalšie hodnoty skrine.",
           "cell_scan_interval": "Napätia jednotlivých článkov a teploty modulov. 0 = vypnuté (integrácia sa znovu načíta).",
           "module_count": "0 = zistiť automaticky (jeden modul na každú funkčnú BMU).",
-          "cells_per_module": "0 = zistiť automaticky (články, ktoré hlásia napätie)."
+          "cells_per_module": "0 = zistiť automaticky (články, ktoré hlásia napätie).",
+          "temperatures_per_module": "0 = zistiť automaticky (senzory, ktoré hlásia hodnotu)."
         }
       }
     }

@@ -25,7 +25,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import CONF_CELLS_PER_MODULE
+from .const import CONF_CELLS_PER_MODULE, CONF_TEMPS_PER_MODULE
 from .coordinator import GceBmsCellCoordinator, GceBmsConfigEntry, GceBmsCoordinator
 from .entity import GceBmsEntity
 from .modbus import CHARGE_STATES, SELF_TEST_STATES, SWITCH_STATES, RbmsStatus
@@ -209,6 +209,7 @@ async def async_setup_entry(
     ]
     if (cells := runtime.cells) is not None:
         cells_per_module = int(entry.options.get(CONF_CELLS_PER_MODULE, 0))
+        temps_per_module = int(entry.options.get(CONF_TEMPS_PER_MODULE, 0))
         for module, data in cells.data.items():
             entities.extend(
                 GceBmsCellVoltageSensor(cells, module, cell)
@@ -216,7 +217,7 @@ async def async_setup_entry(
             )
             entities.extend(
                 GceBmsCellTemperatureSensor(cells, module, sensor)
-                for sensor in range(1, len(data.temperatures) + 1)
+                for sensor in range(1, (temps_per_module or len(data.temperatures)) + 1)
             )
 
     # Drop cell / temperature entities left over from a larger battery layout

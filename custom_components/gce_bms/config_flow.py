@@ -18,6 +18,7 @@ from .const import (
     CONF_CELL_SCAN_INTERVAL,
     CONF_CELLS_PER_MODULE,
     CONF_MODULE_COUNT,
+    CONF_TEMPS_PER_MODULE,
     CONF_UNIT_ID,
     DEFAULT_CELL_SCAN_INTERVAL,
     DEFAULT_PORT,
@@ -28,6 +29,7 @@ from .const import (
     MAX_SCAN_INTERVAL,
     MIN_SCAN_INTERVAL,
     REG_STATUS_START,
+    TEMPERATURE_SLOTS,
 )
 from .coordinator import GceBmsConfigEntry
 from .modbus import GceBmsClient, ModbusConnectionError, ModbusError
@@ -67,6 +69,9 @@ def _layout_schema(defaults: Mapping[str, Any]) -> dict[vol.Marker, Any]:
         vol.Required(
             CONF_CELLS_PER_MODULE, default=defaults.get(CONF_CELLS_PER_MODULE, 0)
         ): _count_selector(CELL_SLOTS),
+        vol.Required(
+            CONF_TEMPS_PER_MODULE, default=defaults.get(CONF_TEMPS_PER_MODULE, 0)
+        ): _count_selector(TEMPERATURE_SLOTS),
     }
 
 
@@ -100,7 +105,8 @@ class GceBmsConfigFlow(ConfigFlow, domain=DOMAIN):
             if (error := await _validate(user_input)) is None:
                 data = {k: user_input[k] for k in (CONF_HOST, CONF_PORT, CONF_UNIT_ID)}
                 options = {
-                    k: int(user_input[k]) for k in (CONF_MODULE_COUNT, CONF_CELLS_PER_MODULE)
+                    k: int(user_input[k])
+                    for k in (CONF_MODULE_COUNT, CONF_CELLS_PER_MODULE, CONF_TEMPS_PER_MODULE)
                 }
                 return self.async_create_entry(
                     title=f"GCE BMS {user_input[CONF_UNIT_ID]}", data=data, options=options

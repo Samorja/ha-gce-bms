@@ -9,13 +9,15 @@
           "port": "Port",
           "unit_id": "Modbus unit ID (cabinet number)",
           "module_count": "Number of modules",
-          "cells_per_module": "Cells per module"
+          "cells_per_module": "Cells per module",
+          "temperatures_per_module": "Temperature probes per module"
         },
         "data_description": {
           "host": "IP address of the RS485-to-Ethernet gateway.",
           "unit_id": "Cabinet 1 = unit 1, cabinet 2 = unit 2, and so on.",
           "module_count": "0 = detect automatically (one module per working BMU).",
-          "cells_per_module": "0 = detect automatically (cells that report a voltage)."
+          "cells_per_module": "0 = detect automatically (cells that report a voltage).",
+          "temperatures_per_module": "0 = detect automatically (probes that report a value)."
         }
       },
       "reconfigure": {
@@ -45,13 +47,15 @@
           "scan_interval": "Polling interval",
           "cell_scan_interval": "Cell data polling interval",
           "module_count": "Number of modules",
-          "cells_per_module": "Cells per module"
+          "cells_per_module": "Cells per module",
+          "temperatures_per_module": "Temperature probes per module"
         },
         "data_description": {
           "scan_interval": "Voltage, current, SOC, alarms and other cabinet values.",
           "cell_scan_interval": "Per-cell voltages and module temperatures. 0 = off (the integration reloads).",
           "module_count": "0 = detect automatically (one module per working BMU).",
-          "cells_per_module": "0 = detect automatically (cells that report a voltage)."
+          "cells_per_module": "0 = detect automatically (cells that report a voltage).",
+          "temperatures_per_module": "0 = detect automatically (probes that report a value)."
         }
       }
     }
