@@ -1,0 +1,102 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Batériová skriňa GCE BMS (RBMS)",
+        "description": "Pripojenie k jednej batériovej skrini RBMS cez Modbus TCP prevodník. Pre každú ďalšiu skriňu pridaj integráciu znova.",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "unit_id": "Modbus adresa (číslo skrine)"
+        },
+        "data_description": {
+          "host": "IP adresa prevodníka RS485/Ethernet.",
+          "unit_id": "Skriňa 1 = adresa 1, skriňa 2 = adresa 2 atď."
+        }
+      },
+      "reconfigure": {
+        "title": "Zmena nastavenia GCE BMS",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "unit_id": "Modbus adresa (číslo skrine)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "BMS neodpovedá. Skontroluj host, port a Modbus adresu.",
+      "invalid_response": "Zariadenie odpovedalo, ale nie platnými dátami RBMS.",
+      "unknown": "Neočakávaná chyba"
+    },
+    "abort": {
+      "already_configured": "Táto skriňa je už nastavená.",
+      "reconfigure_successful": "Nastavenie bolo úspešne zmenené."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Možnosti GCE BMS",
+        "data": {
+          "scan_interval": "Interval čítania"
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "problem": { "name": "Porucha" },
+      "warning": { "name": "Varovanie" },
+      "protection_1": { "name": "Ochrana 1. stupňa" },
+      "protection_2": { "name": "Ochrana 2. stupňa" },
+      "bmu_fault": { "name": "Porucha BMU" }
+    },
+    "sensor": {
+      "voltage": { "name": "Napätie" },
+      "current": { "name": "Prúd" },
+      "power": { "name": "Výkon" },
+      "soc": { "name": "Stav nabitia" },
+      "soh": { "name": "Stav batérie (SOH)" },
+      "charge_state": {
+        "name": "Režim",
+        "state": {
+          "charging": "Nabíjanie",
+          "discharging": "Vybíjanie",
+          "idle": "Kľud"
+        }
+      },
+      "temperature_max": { "name": "Najvyššia teplota" },
+      "temperature_min": { "name": "Najnižšia teplota" },
+      "cell_voltage_max": { "name": "Najvyššie napätie článku" },
+      "cell_voltage_min": { "name": "Najnižšie napätie článku" },
+      "cell_voltage_delta": { "name": "Rozdiel napätia článkov" },
+      "warnings": { "name": "Aktívne varovania" },
+      "protections_1": { "name": "Aktívne ochrany 1. stupňa" },
+      "protections_2": { "name": "Aktívne ochrany 2. stupňa" },
+      "self_test": {
+        "name": "Self-test",
+        "state": {
+          "ok": "OK",
+          "failed": "Zlyhal"
+        }
+      },
+      "bmu_count": { "name": "Počet BMU" },
+      "breaker": {
+        "name": "Istič",
+        "state": { "open": "Rozopnutý", "closed": "Zopnutý", "fault": "Porucha" }
+      },
+      "main_positive_contactor": {
+        "name": "Hlavný kladný stýkač",
+        "state": { "open": "Rozopnutý", "closed": "Zopnutý", "fault": "Porucha" }
+      },
+      "auxiliary_discharge_contactor": {
+        "name": "Pomocný vybíjací stýkač",
+        "state": { "open": "Rozopnutý", "closed": "Zopnutý", "fault": "Porucha" }
+      },
+      "negative_contactor": {
+        "name": "Záporný stýkač",
+        "state": { "open": "Rozopnutý", "closed": "Zopnutý", "fault": "Porucha" }
+      }
+    }
+  }
+}

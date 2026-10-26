@@ -1,0 +1,102 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "GCE BMS battery cabinet (RBMS)",
+        "description": "Connect to one RBMS battery cabinet through a Modbus TCP gateway. Add the integration again for each further cabinet.",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "unit_id": "Modbus unit ID (cabinet number)"
+        },
+        "data_description": {
+          "host": "IP address of the RS485-to-Ethernet gateway.",
+          "unit_id": "Cabinet 1 = unit 1, cabinet 2 = unit 2, and so on."
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigure GCE BMS",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "unit_id": "Modbus unit ID (cabinet number)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "No response from the BMS. Check host, port and unit ID.",
+      "invalid_response": "The device answered, but not with valid RBMS data.",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "This cabinet is already configured.",
+      "reconfigure_successful": "Reconfiguration was successful."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "GCE BMS options",
+        "data": {
+          "scan_interval": "Polling interval"
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "problem": { "name": "Problem" },
+      "warning": { "name": "Warning" },
+      "protection_1": { "name": "Primary protection" },
+      "protection_2": { "name": "Secondary protection" },
+      "bmu_fault": { "name": "BMU fault" }
+    },
+    "sensor": {
+      "voltage": { "name": "Voltage" },
+      "current": { "name": "Current" },
+      "power": { "name": "Power" },
+      "soc": { "name": "State of charge" },
+      "soh": { "name": "State of health" },
+      "charge_state": {
+        "name": "Charge state",
+        "state": {
+          "charging": "Charging",
+          "discharging": "Discharging",
+          "idle": "Idle"
+        }
+      },
+      "temperature_max": { "name": "Highest temperature" },
+      "temperature_min": { "name": "Lowest temperature" },
+      "cell_voltage_max": { "name": "Highest cell voltage" },
+      "cell_voltage_min": { "name": "Lowest cell voltage" },
+      "cell_voltage_delta": { "name": "Cell voltage difference" },
+      "warnings": { "name": "Active warnings" },
+      "protections_1": { "name": "Active primary protections" },
+      "protections_2": { "name": "Active secondary protections" },
+      "self_test": {
+        "name": "Self-test",
+        "state": {
+          "ok": "OK",
+          "failed": "Failed"
+        }
+      },
+      "bmu_count": { "name": "BMU count" },
+      "breaker": {
+        "name": "Circuit breaker",
+        "state": { "open": "Open", "closed": "Closed", "fault": "Fault" }
+      },
+      "main_positive_contactor": {
+        "name": "Main positive contactor",
+        "state": { "open": "Open", "closed": "Closed", "fault": "Fault" }
+      },
+      "auxiliary_discharge_contactor": {
+        "name": "Auxiliary discharge contactor",
+        "state": { "open": "Open", "closed": "Closed", "fault": "Fault" }
+      },
+      "negative_contactor": {
+        "name": "Negative contactor",
+        "state": { "open": "Open", "closed": "Closed", "fault": "Fault" }
+      }
+    }
+  }
+}
