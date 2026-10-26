@@ -11,7 +11,14 @@ from dataclasses import dataclass, field
 import itertools
 import struct
 
-from .const import REG_STATUS_COUNT, REG_STATUS_START
+from .const import (
+    CELL_BLOCK_SIZE,
+    CELL_SLOTS,
+    MODULE_STRIDE,
+    REG_CELL_START,
+    REG_STATUS_COUNT,
+    REG_STATUS_START,
+)
 
 # Several cabinets often share one RS485-to-Ethernet gateway; serialise access per gateway.
 _LOCKS: dict[tuple[str, int], asyncio.Lock] = {}
@@ -45,45 +52,81 @@ class GceBmsClient:
 
     async def read_holding_registers(self, address: int, count: int) -> list[int]:
         """Read `count` holding registers starting at `address` (function 0x03)."""
+        return (await self.read_blocks([(address, count)]))[0]
+
+    async def read_blocks(self, blocks: list[tuple[int, int]]) -> list[list[int]]:
+        """Read several (address, count) blocks over one TCP connection."""
         lock = _LOCKS.setdefault((self.host, self.port), asyncio.Lock())
         async with lock:
             try:
-                return await asyncio.wait_for(self._read(address, count), self.timeout)
+                reader, writer = await asyncio.wait_for(
+                    asyncio.open_connection(self.host, self.port), self.timeout
+                )
+            except (TimeoutError, OSError) as err:
+                raise ModbusConnectionError(
+                    f"Cannot connect to {self.host}:{self.port}: {err!r}"
+                ) from err
+            try:
+                return [
+                    await asyncio.wait_for(self._request(reader, writer, address, count), self.timeout)
+                    for address, count in blocks
+                ]
             except (TimeoutError, OSError, asyncio.IncompleteReadError) as err:
                 raise ModbusConnectionError(
                     f"No response from {self.host}:{self.port} unit {self.unit_id}: {err!r}"
                 ) from err
+            finally:
+                writer.close()
+                with suppress(OSError):
+                    await writer.wait_closed()
 
-    async def _read(self, address: int, count: int) -> list[int]:
-        reader, writer = await asyncio.open_connection(self.host, self.port)
-        try:
-            tid = next(_TRANSACTION_IDS) & 0xFFFF
-            writer.write(struct.pack(">HHHBBHH", tid, 0, 6, self.unit_id, 0x03, address, count))
-            await writer.drain()
+    async def _request(
+        self,
+        reader: asyncio.StreamReader,
+        writer: asyncio.StreamWriter,
+        address: int,
+        count: int,
+    ) -> list[int]:
+        tid = next(_TRANSACTION_IDS) & 0xFFFF
+        writer.write(struct.pack(">HHHBBHH", tid, 0, 6, self.unit_id, 0x03, address, count))
+        await writer.drain()
 
-            # Skip stale frames from earlier timed-out requests
-            while True:
-                r_tid, _proto, length, _unit = struct.unpack(">HHHB", await reader.readexactly(7))
-                body = await reader.readexactly(length - 1)
-                if r_tid == tid:
-                    break
+        # Skip stale frames from earlier timed-out requests
+        while True:
+            r_tid, _proto, length, _unit = struct.unpack(">HHHB", await reader.readexactly(7))
+            body = await reader.readexactly(length - 1)
+            if r_tid == tid:
+                break
 
-            if body[0] & 0x80:
-                raise ModbusExceptionResponse(body[1])
-            byte_count = body[1]
-            if byte_count != count * 2 or len(body) < 2 + byte_count:
-                raise ModbusError(f"Unexpected response length {byte_count} for {count} registers")
-            return list(struct.unpack(f">{count}H", body[2 : 2 + byte_count]))
-        finally:
-            writer.close()
-            with suppress(OSError):
-                await writer.wait_closed()
+        if body[0] & 0x80:
+            raise ModbusExceptionResponse(body[1])
+        byte_count = body[1]
+        if byte_count != count * 2 or len(body) < 2 + byte_count:
+            raise ModbusError(f"Unexpected response length {byte_count} for {count} registers")
+        return list(struct.unpack(f">{count}H", body[2 : 2 + byte_count]))
 
     async def read_status(self) -> RbmsStatus:
         """Read and decode the cabinet status block."""
         return RbmsStatus.from_registers(
             await self.read_holding_registers(REG_STATUS_START, REG_STATUS_COUNT)
         )
+
+    async def read_modules(self, modules: list[int]) -> dict[int, ModuleData]:
+        """Read cell voltages and temperatures of the given (1-based) modules."""
+        blocks = [
+            (module_base(module) + offset, CELL_BLOCK_SIZE)
+            for module in modules
+            for offset in range(0, MODULE_STRIDE, CELL_BLOCK_SIZE)
+        ]
+        results = await self.read_blocks(blocks)
+        per_module = MODULE_STRIDE // CELL_BLOCK_SIZE
+        return {
+            module: ModuleData.from_registers(
+                module,
+                [v for block in results[i * per_module : (i + 1) * per_module] for v in block],
+            )
+            for i, module in enumerate(modules)
+        }
 
 
 def _s16(value: int) -> int:
@@ -287,4 +330,35 @@ class RbmsStatus:
             warnings=decode_events(r[21], WARNING_EVENTS),
             protections_1=decode_events(r[22], PROTECTION_1_EVENTS),
             protections_2=decode_events(r[30], PROTECTION_2_EVENTS),
+        )
+
+
+def module_base(module: int) -> int:
+    """First register of a (1-based) module's cell data."""
+    return REG_CELL_START + (module - 1) * MODULE_STRIDE
+
+
+def _trim_zeros(values: list[int]) -> list[int]:
+    """Drop unused (zero) slots at the end."""
+    end = len(values)
+    while end and values[end - 1] == 0:
+        end -= 1
+    return values[:end]
+
+
+@dataclass(slots=True)
+class ModuleData:
+    """Cell voltages (V) and temperatures (degC) of one battery module."""
+
+    module: int
+    voltages: list[float]
+    temperatures: list[int]
+
+    @classmethod
+    def from_registers(cls, module: int, r: list[int]) -> ModuleData:
+        """Decode one module block: CELL_SLOTS cell voltages (mV), then temperatures."""
+        return cls(
+            module=module,
+            voltages=[v / 1000 for v in _trim_zeros(r[:CELL_SLOTS])],
+            temperatures=[_s16(v) for v in _trim_zeros(r[CELL_SLOTS:MODULE_STRIDE])],
         )

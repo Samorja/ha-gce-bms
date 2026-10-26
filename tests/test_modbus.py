@@ -16,7 +16,13 @@ for name in ("const", "modbus"):
     sys.modules[f"gce_bms.{name}"] = module
     spec.loader.exec_module(module)
 
-from gce_bms.modbus import RbmsStatus, decode_events, PROTECTION_2_EVENTS  # noqa: E402
+from gce_bms.modbus import (  # noqa: E402
+    PROTECTION_2_EVENTS,
+    ModuleData,
+    RbmsStatus,
+    decode_events,
+    module_base,
+)
 
 # 0x1100-0x111F read from a cabinet on 2026-10-26 (charging at -10 A, SOC 17 %)
 CAPTURED = [
@@ -62,3 +68,34 @@ def test_negative_temperature_and_events():
     assert s.warnings == ["total_voltage_high", "charge_temperature_low", "discharge_temperature_low"]
     assert s.bmu_faults == [4]
     assert decode_events(1 << 7, PROTECTION_2_EVENTS) == ["external_protection"]
+
+
+# Module 3 block (0x2100-0x217F) captured on 2026-10-26: 50 cells, 24 temperature probes
+MODULE_3 = (
+    [3336, 3337, 3338, 3337, 3337, 3338, 3338, 3337, 3338, 3338, 3337, 3337, 3337, 3336, 3337, 3338,
+     3337, 3335, 3336, 3338, 3335, 3337, 3337, 3337, 3335, 3337, 3336, 3267, 3337, 3337, 3337, 3337,
+     3336, 3337, 3335, 3337, 3335, 3335, 3335, 3336, 3337, 3336, 3336, 3336, 3335, 3337, 3336, 3337,
+     3337, 3333]
+    + [0] * 14
+    + [14, 13, 12, 13, 12, 13, 12, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 12]
+    + [0] * 40
+)
+
+
+def test_module_layout():
+    assert len(MODULE_3) == 0x80
+    assert [module_base(m) for m in (1, 2, 3, 4)] == [0x2000, 0x2080, 0x2100, 0x2180]
+    m = ModuleData.from_registers(3, MODULE_3)
+    assert len(m.voltages) == 50
+    assert len(m.temperatures) == 24
+    assert m.voltages[27] == 3.267  # cell 28, reported as the cabinet's lowest cell
+    assert min(m.voltages) == 3.267
+    assert m.temperatures[:3] == [14, 13, 12]
+
+
+def test_module_negative_temperature_and_empty_module():
+    regs = list(MODULE_3)
+    regs[0x40] = 0xFFFE
+    assert ModuleData.from_registers(3, regs).temperatures[0] == -2
+    empty = ModuleData.from_registers(5, [0] * 0x80)
+    assert empty.voltages == [] and empty.temperatures == []

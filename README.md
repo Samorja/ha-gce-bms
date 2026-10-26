@@ -12,10 +12,12 @@ No YAML, no extra Python dependencies – set up from the UI, one entry per batt
 - Warnings, primary protections (contactor opened) and secondary protections (breaker tripped), decoded into named events
 - Circuit breaker and contactor states, BMS self-test, BMU count and BMU communication / voltage / temperature faults
 - `Problem` binary sensor that turns on for any warning, protection, failed self-test or BMU fault
-- Configurable polling interval (default 10 s), reconfigure flow for host / port / unit ID
+- **Voltage of every cell** (e.g. 4 modules × 50 cells = 200 sensors) and every module temperature probe (disabled by default)
+- Separate polling intervals for cabinet values (default 10 s) and cell data (default 60 s, `0` turns cell data off)
+- Reconfigure flow for host / port / unit ID
 - English and Slovak translations
 
-All values come from one read of registers `0x1100–0x111F` per poll.
+Cabinet values come from one read of registers `0x1100–0x111F`. Cell data is read for each working BMU (one module per BMU) over a single TCP connection.
 
 ## Installation
 
@@ -47,7 +49,7 @@ The gateway must run in **Modbus TCP** mode (Modbus TCP ↔ RTU conversion), RS4
 - Only **RBMS** (single cabinet) data is supported. The system-level SBMS (unit `0x30`) is not.
 - The BMS answers at most `0x24` registers per request.
 - On the tested firmware the registers `0x1120–0x1123` (charge/discharge enable, max power) do not match the protocol document, so they are not exposed.
-- Per-cell voltages (`0x2000+`) are not exposed yet: on the tested cabinet a module holds about 50 cells, which does not match the 24 + 8 layout in the document.
+- Cell data (`0x2000+`) does not follow the 24 cells + 8 temperatures layout in the document. Real firmware uses `0x80` registers per module: 64 cell voltage slots (mV), then 64 temperature slots (°C). Module *n* starts at `0x2000 + (n−1)·0x80`, and unused slots read `0`. The integration creates sensors only for the cells and probes in use.
 
 ## Entities
 
@@ -67,6 +69,10 @@ The gateway must run in **Modbus TCP** mode (Modbus TCP ↔ RTU conversion), RS4
 | BMU count | – | diagnostic; per-BMU status lists as attributes |
 | Circuit breaker, contactors | – | diagnostic; open / closed / fault |
 | Problem, Warning, Primary protection, Secondary protection, BMU fault | binary | device class `problem` |
+| Module *n* cell *nn* | V | one per cell |
+| Module *n* temperature *nn* | °C | one per probe, disabled by default |
+
+Recording 200 cell sensors creates a lot of history. To keep the database small, exclude them from the recorder or lengthen the cell polling interval in the integration options.
 
 ## Development
 
@@ -75,7 +81,7 @@ pip install pytest
 pytest
 ```
 
-The tests decode a status frame captured from a real cabinet.
+The tests decode a status frame and a module block captured from a real cabinet.
 
 ## License
 

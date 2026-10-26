@@ -23,7 +23,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .coordinator import GceBmsConfigEntry, GceBmsCoordinator
+from .coordinator import GceBmsCellCoordinator, GceBmsConfigEntry, GceBmsCoordinator
 from .entity import GceBmsEntity
 from .modbus import CHARGE_STATES, SELF_TEST_STATES, SWITCH_STATES, RbmsStatus
 
@@ -200,11 +200,24 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up GCE BMS sensors."""
-    coordinator = entry.runtime_data
-    async_add_entities(GceBmsSensor(coordinator, description) for description in SENSORS)
+    runtime = entry.runtime_data
+    entities: list[SensorEntity] = [
+        GceBmsSensor(runtime.status, description) for description in SENSORS
+    ]
+    if (cells := runtime.cells) is not None:
+        for module, data in cells.data.items():
+            entities.extend(
+                GceBmsCellVoltageSensor(cells, module, cell)
+                for cell in range(1, len(data.voltages) + 1)
+            )
+            entities.extend(
+                GceBmsCellTemperatureSensor(cells, module, sensor)
+                for sensor in range(1, len(data.temperatures) + 1)
+            )
+    async_add_entities(entities)
 
 
-class GceBmsSensor(GceBmsEntity, SensorEntity):
+class GceBmsSensor(GceBmsEntity[GceBmsCoordinator], SensorEntity):
     """A GCE BMS sensor."""
 
     entity_description: GceBmsSensorDescription
@@ -224,3 +237,43 @@ class GceBmsSensor(GceBmsEntity, SensorEntity):
         if self.entity_description.attr_fn is None:
             return None
         return self.entity_description.attr_fn(self.coordinator.data)
+
+
+class GceBmsCellVoltageSensor(GceBmsEntity[GceBmsCellCoordinator], SensorEntity):
+    """Voltage of one cell."""
+
+    _attr_device_class = SensorDeviceClass.VOLTAGE
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_native_unit_of_measurement = UnitOfElectricPotential.VOLT
+    _attr_suggested_display_precision = 3
+
+    def __init__(self, coordinator: GceBmsCellCoordinator, module: int, cell: int) -> None:
+        super().__init__(coordinator, "cell_voltage", f"module_{module}_cell_{cell}")
+        self._attr_translation_placeholders = {"module": str(module), "cell": f"{cell:02d}"}
+        self._module = module
+        self._index = cell - 1
+
+    @property
+    def native_value(self) -> float | None:
+        values = self.coordinator.data[self._module].voltages
+        return values[self._index] if self._index < len(values) else None
+
+
+class GceBmsCellTemperatureSensor(GceBmsEntity[GceBmsCellCoordinator], SensorEntity):
+    """One temperature probe of a module (disabled by default)."""
+
+    _attr_device_class = SensorDeviceClass.TEMPERATURE
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
+    _attr_entity_registry_enabled_default = False
+
+    def __init__(self, coordinator: GceBmsCellCoordinator, module: int, sensor: int) -> None:
+        super().__init__(coordinator, "module_temperature", f"module_{module}_temperature_{sensor}")
+        self._attr_translation_placeholders = {"module": str(module), "sensor": f"{sensor:02d}"}
+        self._module = module
+        self._index = sensor - 1
+
+    @property
+    def native_value(self) -> int | None:
+        values = self.coordinator.data[self._module].temperatures
+        return values[self._index] if self._index < len(values) else None

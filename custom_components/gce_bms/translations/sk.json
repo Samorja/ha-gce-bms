@@ -38,25 +38,50 @@
       "init": {
         "title": "Možnosti GCE BMS",
         "data": {
-          "scan_interval": "Interval čítania"
+          "scan_interval": "Interval čítania",
+          "cell_scan_interval": "Interval čítania článkov"
+        },
+        "data_description": {
+          "scan_interval": "Napätie, prúd, SOC, alarmy a ďalšie hodnoty skrine.",
+          "cell_scan_interval": "Napätia jednotlivých článkov a teploty modulov. 0 = vypnuté (integrácia sa znovu načíta)."
         }
       }
     }
   },
   "entity": {
     "binary_sensor": {
-      "problem": { "name": "Porucha" },
-      "warning": { "name": "Varovanie" },
-      "protection_1": { "name": "Ochrana 1. stupňa" },
-      "protection_2": { "name": "Ochrana 2. stupňa" },
-      "bmu_fault": { "name": "Porucha BMU" }
+      "problem": {
+        "name": "Porucha"
+      },
+      "warning": {
+        "name": "Varovanie"
+      },
+      "protection_1": {
+        "name": "Ochrana 1. stupňa"
+      },
+      "protection_2": {
+        "name": "Ochrana 2. stupňa"
+      },
+      "bmu_fault": {
+        "name": "Porucha BMU"
+      }
     },
     "sensor": {
-      "voltage": { "name": "Napätie" },
-      "current": { "name": "Prúd" },
-      "power": { "name": "Výkon" },
-      "soc": { "name": "Stav nabitia" },
-      "soh": { "name": "Stav batérie (SOH)" },
+      "voltage": {
+        "name": "Napätie"
+      },
+      "current": {
+        "name": "Prúd"
+      },
+      "power": {
+        "name": "Výkon"
+      },
+      "soc": {
+        "name": "Stav nabitia"
+      },
+      "soh": {
+        "name": "Stav batérie (SOH)"
+      },
       "charge_state": {
         "name": "Režim",
         "state": {
@@ -65,14 +90,30 @@
           "idle": "Kľud"
         }
       },
-      "temperature_max": { "name": "Najvyššia teplota" },
-      "temperature_min": { "name": "Najnižšia teplota" },
-      "cell_voltage_max": { "name": "Najvyššie napätie článku" },
-      "cell_voltage_min": { "name": "Najnižšie napätie článku" },
-      "cell_voltage_delta": { "name": "Rozdiel napätia článkov" },
-      "warnings": { "name": "Aktívne varovania" },
-      "protections_1": { "name": "Aktívne ochrany 1. stupňa" },
-      "protections_2": { "name": "Aktívne ochrany 2. stupňa" },
+      "temperature_max": {
+        "name": "Najvyššia teplota"
+      },
+      "temperature_min": {
+        "name": "Najnižšia teplota"
+      },
+      "cell_voltage_max": {
+        "name": "Najvyššie napätie článku"
+      },
+      "cell_voltage_min": {
+        "name": "Najnižšie napätie článku"
+      },
+      "cell_voltage_delta": {
+        "name": "Rozdiel napätia článkov"
+      },
+      "warnings": {
+        "name": "Aktívne varovania"
+      },
+      "protections_1": {
+        "name": "Aktívne ochrany 1. stupňa"
+      },
+      "protections_2": {
+        "name": "Aktívne ochrany 2. stupňa"
+      },
       "self_test": {
         "name": "Self-test",
         "state": {
@@ -80,22 +121,46 @@
           "failed": "Zlyhal"
         }
       },
-      "bmu_count": { "name": "Počet BMU" },
+      "bmu_count": {
+        "name": "Počet BMU"
+      },
       "breaker": {
         "name": "Istič",
-        "state": { "open": "Rozopnutý", "closed": "Zopnutý", "fault": "Porucha" }
+        "state": {
+          "open": "Rozopnutý",
+          "closed": "Zopnutý",
+          "fault": "Porucha"
+        }
       },
       "main_positive_contactor": {
         "name": "Hlavný kladný stýkač",
-        "state": { "open": "Rozopnutý", "closed": "Zopnutý", "fault": "Porucha" }
+        "state": {
+          "open": "Rozopnutý",
+          "closed": "Zopnutý",
+          "fault": "Porucha"
+        }
       },
       "auxiliary_discharge_contactor": {
         "name": "Pomocný vybíjací stýkač",
-        "state": { "open": "Rozopnutý", "closed": "Zopnutý", "fault": "Porucha" }
+        "state": {
+          "open": "Rozopnutý",
+          "closed": "Zopnutý",
+          "fault": "Porucha"
+        }
       },
       "negative_contactor": {
         "name": "Záporný stýkač",
-        "state": { "open": "Rozopnutý", "closed": "Zopnutý", "fault": "Porucha" }
+        "state": {
+          "open": "Rozopnutý",
+          "closed": "Zopnutý",
+          "fault": "Porucha"
+        }
+      },
+      "cell_voltage": {
+        "name": "Modul {module} článok {cell}"
+      },
+      "module_temperature": {
+        "name": "Modul {module} teplota {sensor}"
       }
     }
   }

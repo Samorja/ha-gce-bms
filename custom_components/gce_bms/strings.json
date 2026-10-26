@@ -38,25 +38,50 @@
       "init": {
         "title": "GCE BMS options",
         "data": {
-          "scan_interval": "Polling interval"
+          "scan_interval": "Polling interval",
+          "cell_scan_interval": "Cell data polling interval"
+        },
+        "data_description": {
+          "scan_interval": "Voltage, current, SOC, alarms and other cabinet values.",
+          "cell_scan_interval": "Per-cell voltages and module temperatures. 0 = off (the integration reloads)."
         }
       }
     }
   },
   "entity": {
     "binary_sensor": {
-      "problem": { "name": "Problem" },
-      "warning": { "name": "Warning" },
-      "protection_1": { "name": "Primary protection" },
-      "protection_2": { "name": "Secondary protection" },
-      "bmu_fault": { "name": "BMU fault" }
+      "problem": {
+        "name": "Problem"
+      },
+      "warning": {
+        "name": "Warning"
+      },
+      "protection_1": {
+        "name": "Primary protection"
+      },
+      "protection_2": {
+        "name": "Secondary protection"
+      },
+      "bmu_fault": {
+        "name": "BMU fault"
+      }
     },
     "sensor": {
-      "voltage": { "name": "Voltage" },
-      "current": { "name": "Current" },
-      "power": { "name": "Power" },
-      "soc": { "name": "State of charge" },
-      "soh": { "name": "State of health" },
+      "voltage": {
+        "name": "Voltage"
+      },
+      "current": {
+        "name": "Current"
+      },
+      "power": {
+        "name": "Power"
+      },
+      "soc": {
+        "name": "State of charge"
+      },
+      "soh": {
+        "name": "State of health"
+      },
       "charge_state": {
         "name": "Charge state",
         "state": {
@@ -65,14 +90,30 @@
           "idle": "Idle"
         }
       },
-      "temperature_max": { "name": "Highest temperature" },
-      "temperature_min": { "name": "Lowest temperature" },
-      "cell_voltage_max": { "name": "Highest cell voltage" },
-      "cell_voltage_min": { "name": "Lowest cell voltage" },
-      "cell_voltage_delta": { "name": "Cell voltage difference" },
-      "warnings": { "name": "Active warnings" },
-      "protections_1": { "name": "Active primary protections" },
-      "protections_2": { "name": "Active secondary protections" },
+      "temperature_max": {
+        "name": "Highest temperature"
+      },
+      "temperature_min": {
+        "name": "Lowest temperature"
+      },
+      "cell_voltage_max": {
+        "name": "Highest cell voltage"
+      },
+      "cell_voltage_min": {
+        "name": "Lowest cell voltage"
+      },
+      "cell_voltage_delta": {
+        "name": "Cell voltage difference"
+      },
+      "warnings": {
+        "name": "Active warnings"
+      },
+      "protections_1": {
+        "name": "Active primary protections"
+      },
+      "protections_2": {
+        "name": "Active secondary protections"
+      },
       "self_test": {
         "name": "Self-test",
         "state": {
@@ -80,22 +121,46 @@
           "failed": "Failed"
         }
       },
-      "bmu_count": { "name": "BMU count" },
+      "bmu_count": {
+        "name": "BMU count"
+      },
       "breaker": {
         "name": "Circuit breaker",
-        "state": { "open": "Open", "closed": "Closed", "fault": "Fault" }
+        "state": {
+          "open": "Open",
+          "closed": "Closed",
+          "fault": "Fault"
+        }
       },
       "main_positive_contactor": {
         "name": "Main positive contactor",
-        "state": { "open": "Open", "closed": "Closed", "fault": "Fault" }
+        "state": {
+          "open": "Open",
+          "closed": "Closed",
+          "fault": "Fault"
+        }
       },
       "auxiliary_discharge_contactor": {
         "name": "Auxiliary discharge contactor",
-        "state": { "open": "Open", "closed": "Closed", "fault": "Fault" }
+        "state": {
+          "open": "Open",
+          "closed": "Closed",
+          "fault": "Fault"
+        }
       },
       "negative_contactor": {
         "name": "Negative contactor",
-        "state": { "open": "Open", "closed": "Closed", "fault": "Fault" }
+        "state": {
+          "open": "Open",
+          "closed": "Closed",
+          "fault": "Fault"
+        }
+      },
+      "cell_voltage": {
+        "name": "Module {module} cell {cell}"
+      },
+      "module_temperature": {
+        "name": "Module {module} temperature {sensor}"
       }
     }
   }

@@ -70,13 +70,13 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up GCE BMS binary sensors."""
-    coordinator = entry.runtime_data
+    coordinator = entry.runtime_data.status
     async_add_entities(
         GceBmsBinarySensor(coordinator, description) for description in BINARY_SENSORS
     )
 
 
-class GceBmsBinarySensor(GceBmsEntity, BinarySensorEntity):
+class GceBmsBinarySensor(GceBmsEntity[GceBmsCoordinator], BinarySensorEntity):
     """A GCE BMS binary sensor."""
 
     entity_description: GceBmsBinarySensorDescription

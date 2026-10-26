@@ -13,7 +13,9 @@ from homeassistant.core import callback
 from homeassistant.helpers import selector
 
 from .const import (
+    CONF_CELL_SCAN_INTERVAL,
     CONF_UNIT_ID,
+    DEFAULT_CELL_SCAN_INTERVAL,
     DEFAULT_PORT,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_UNIT_ID,
@@ -127,6 +129,20 @@ class GceBmsOptionsFlow(OptionsFlow):
                     ): selector.NumberSelector(
                         selector.NumberSelectorConfig(
                             min=MIN_SCAN_INTERVAL,
+                            max=MAX_SCAN_INTERVAL,
+                            step=1,
+                            unit_of_measurement="s",
+                            mode=selector.NumberSelectorMode.BOX,
+                        )
+                    ),
+                    vol.Required(
+                        CONF_CELL_SCAN_INTERVAL,
+                        default=self.config_entry.options.get(
+                            CONF_CELL_SCAN_INTERVAL, DEFAULT_CELL_SCAN_INTERVAL
+                        ),
+                    ): selector.NumberSelector(
+                        selector.NumberSelectorConfig(
+                            min=0,
                             max=MAX_SCAN_INTERVAL,
                             step=1,
                             unit_of_measurement="s",
