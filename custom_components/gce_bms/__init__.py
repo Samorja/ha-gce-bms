@@ -5,7 +5,7 @@ from __future__ import annotations
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
-from .const import CONF_CELL_SCAN_INTERVAL, DEFAULT_CELL_SCAN_INTERVAL
+from .const import CONF_CELL_SCAN_INTERVAL, CONF_MODULE_COUNT, DEFAULT_CELL_SCAN_INTERVAL
 from .coordinator import (
     GceBmsCellCoordinator,
     GceBmsConfigEntry,
@@ -23,8 +23,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: GceBmsConfigEntry) -> bo
 
     cells = None
     if entry.options.get(CONF_CELL_SCAN_INTERVAL, DEFAULT_CELL_SCAN_INTERVAL) > 0:
-        # One battery module per working BMU
-        cells = GceBmsCellCoordinator(hass, entry, status.client, status.data.bmu_working)
+        if module_count := int(entry.options.get(CONF_MODULE_COUNT, 0)):
+            modules = list(range(1, module_count + 1))
+        else:
+            # One battery module per working BMU
+            modules = status.data.bmu_working
+        cells = GceBmsCellCoordinator(hass, entry, status.client, modules)
         await cells.async_config_entry_first_refresh()
 
     entry.runtime_data = GceBmsRuntimeData(status=status, cells=cells)

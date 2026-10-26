@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 import logging
 from typing import Any
 
@@ -13,13 +14,17 @@ from homeassistant.core import callback
 from homeassistant.helpers import selector
 
 from .const import (
+    CELL_SLOTS,
     CONF_CELL_SCAN_INTERVAL,
+    CONF_CELLS_PER_MODULE,
+    CONF_MODULE_COUNT,
     CONF_UNIT_ID,
     DEFAULT_CELL_SCAN_INTERVAL,
     DEFAULT_PORT,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_UNIT_ID,
     DOMAIN,
+    MAX_MODULES,
     MAX_SCAN_INTERVAL,
     MIN_SCAN_INTERVAL,
     REG_STATUS_START,
@@ -30,7 +35,7 @@ from .modbus import GceBmsClient, ModbusConnectionError, ModbusError
 _LOGGER = logging.getLogger(__name__)
 
 
-def _user_schema(defaults: dict[str, Any]) -> vol.Schema:
+def _user_schema(defaults: dict[str, Any], with_layout: bool = False) -> vol.Schema:
     return vol.Schema(
         {
             vol.Required(CONF_HOST, default=defaults.get(CONF_HOST, vol.UNDEFINED)): str,
@@ -40,8 +45,29 @@ def _user_schema(defaults: dict[str, Any]) -> vol.Schema:
             vol.Required(
                 CONF_UNIT_ID, default=defaults.get(CONF_UNIT_ID, DEFAULT_UNIT_ID)
             ): vol.All(vol.Coerce(int), vol.Range(min=1, max=247)),
+            **(_layout_schema(defaults) if with_layout else {}),
         }
     )
+
+
+def _count_selector(maximum: int) -> selector.NumberSelector:
+    return selector.NumberSelector(
+        selector.NumberSelectorConfig(
+            min=0, max=maximum, step=1, mode=selector.NumberSelectorMode.BOX
+        )
+    )
+
+
+def _layout_schema(defaults: Mapping[str, Any]) -> dict[vol.Marker, Any]:
+    """Module and cell counts; 0 = detect automatically."""
+    return {
+        vol.Required(
+            CONF_MODULE_COUNT, default=defaults.get(CONF_MODULE_COUNT, 0)
+        ): _count_selector(MAX_MODULES),
+        vol.Required(
+            CONF_CELLS_PER_MODULE, default=defaults.get(CONF_CELLS_PER_MODULE, 0)
+        ): _count_selector(CELL_SLOTS),
+    }
 
 
 async def _validate(data: dict[str, Any]) -> str | None:
@@ -72,13 +98,19 @@ class GceBmsConfigFlow(ConfigFlow, domain=DOMAIN):
             )
             self._abort_if_unique_id_configured()
             if (error := await _validate(user_input)) is None:
+                data = {k: user_input[k] for k in (CONF_HOST, CONF_PORT, CONF_UNIT_ID)}
+                options = {
+                    k: int(user_input[k]) for k in (CONF_MODULE_COUNT, CONF_CELLS_PER_MODULE)
+                }
                 return self.async_create_entry(
-                    title=f"GCE BMS {user_input[CONF_UNIT_ID]}", data=user_input
+                    title=f"GCE BMS {user_input[CONF_UNIT_ID]}", data=data, options=options
                 )
             errors["base"] = error
 
         return self.async_show_form(
-            step_id="user", data_schema=_user_schema(user_input or {}), errors=errors
+            step_id="user",
+            data_schema=_user_schema(user_input or {}, with_layout=True),
+            errors=errors,
         )
 
     async def async_step_reconfigure(
@@ -111,7 +143,7 @@ class GceBmsConfigFlow(ConfigFlow, domain=DOMAIN):
 
 
 class GceBmsOptionsFlow(OptionsFlow):
-    """Polling interval option."""
+    """Polling intervals and battery layout."""
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if user_input is not None:
@@ -121,6 +153,7 @@ class GceBmsOptionsFlow(OptionsFlow):
             step_id="init",
             data_schema=vol.Schema(
                 {
+                    **_layout_schema(self.config_entry.options),
                     vol.Required(
                         CONF_SCAN_INTERVAL,
                         default=self.config_entry.options.get(

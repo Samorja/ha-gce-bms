@@ -40,7 +40,12 @@ Copy `custom_components/gce_bms` into your `config/custom_components/` folder an
 | Port | `502` (Modbus TCP) |
 | Modbus unit ID | Cabinet number: cabinet 1 = `1`, cabinet 2 = `2`, … |
 
+| Number of modules | `0` = automatic (one module per working BMU), or a fixed number |
+| Cells per module | `0` = automatic (cells that report a voltage), or a fixed number (max. 64) |
+
 Add the integration once per cabinet. Requests to the same gateway are serialised.
+
+The module and cell counts and both polling intervals can be changed later under **Configure**. If you lower a count, the cell sensors that no longer exist are removed.
 
 The gateway must run in **Modbus TCP** mode (Modbus TCP ↔ RTU conversion), RS485 side 9600 baud, 8N1.
 
