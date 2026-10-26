@@ -362,3 +362,13 @@ class ModuleData:
             voltages=[v / 1000 for v in _trim_zeros(r[:CELL_SLOTS])],
             temperatures=[_s16(v) for v in _trim_zeros(r[CELL_SLOTS:MODULE_STRIDE])],
         )
+
+
+def ranked_cells(modules: dict[int, ModuleData]) -> list[tuple[float, int, int]]:
+    """All reporting cells as (voltage, module, cell) sorted from lowest to highest voltage."""
+    return sorted(
+        (voltage, module, index + 1)
+        for module, data in modules.items()
+        for index, voltage in enumerate(data.voltages)
+        if voltage > 0
+    )

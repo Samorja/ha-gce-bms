@@ -22,6 +22,7 @@ from gce_bms.modbus import (  # noqa: E402
     RbmsStatus,
     decode_events,
     module_base,
+    ranked_cells,
 )
 
 # 0x1100-0x111F read from a cabinet on 2026-10-26 (charging at -10 A, SOC 17 %)
@@ -99,3 +100,13 @@ def test_module_negative_temperature_and_empty_module():
     assert ModuleData.from_registers(3, regs).temperatures[0] == -2
     empty = ModuleData.from_registers(5, [0] * 0x80)
     assert empty.voltages == [] and empty.temperatures == []
+
+
+def test_ranked_cells():
+    m3 = ModuleData.from_registers(3, MODULE_3)
+    m4 = ModuleData(module=4, voltages=[3.300, 0.0, 3.400], temperatures=[])
+    ranked = ranked_cells({3: m3, 4: m4})
+    assert len(ranked) == 52  # the 0 V slot is skipped
+    assert ranked[0] == (3.267, 3, 28)
+    assert ranked[1] == (3.3, 4, 1)
+    assert ranked[-1] == (3.4, 4, 3)

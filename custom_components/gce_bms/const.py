@@ -33,3 +33,4 @@ CELL_SLOTS = 0x40
 TEMPERATURE_SLOTS = 0x40
 CELL_BLOCK_SIZE = 0x20
 MAX_MODULES = 32  # BMU status bit fields cover 32 BMUs
+RANKED_CELLS = 5  # lowest / highest cells exposed as their own sensors

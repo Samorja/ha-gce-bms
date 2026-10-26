@@ -77,6 +77,7 @@ The gateway must run in **Modbus TCP** mode (Modbus TCP ↔ RTU conversion), RS4
 | Problem, Warning, Primary protection, Secondary protection, BMU fault | binary | device class `problem` |
 | Module *n* cell *nn* | V | one per cell |
 | Module *n* temperature *nn* | °C | one per probe, disabled by default |
+| Lowest cell 1–5 / Highest cell 1–5 | V | the five lowest and five highest cells of the cabinet; attributes `module`, `cell` |
 
 Recording 200 cell sensors creates a lot of history. To keep the database small, exclude them from the recorder or lengthen the cell polling interval in the integration options.
 

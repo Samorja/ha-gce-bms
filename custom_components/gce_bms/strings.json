@@ -173,6 +173,12 @@
       },
       "module_temperature": {
         "name": "Module {module} temperature {sensor}"
+      },
+      "cell_lowest": {
+        "name": "Lowest cell {rank}"
+      },
+      "cell_highest": {
+        "name": "Highest cell {rank}"
       }
     }
   }

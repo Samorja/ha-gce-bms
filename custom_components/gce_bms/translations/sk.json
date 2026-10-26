@@ -173,6 +173,12 @@
       },
       "module_temperature": {
         "name": "Modul {module} teplota {sensor}"
+      },
+      "cell_lowest": {
+        "name": "Najnižší článok {rank}"
+      },
+      "cell_highest": {
+        "name": "Najvyšší článok {rank}"
       }
     }
   }

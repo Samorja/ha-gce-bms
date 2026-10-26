@@ -25,10 +25,10 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import CONF_CELLS_PER_MODULE, CONF_TEMPS_PER_MODULE
+from .const import CONF_CELLS_PER_MODULE, CONF_TEMPS_PER_MODULE, RANKED_CELLS
 from .coordinator import GceBmsCellCoordinator, GceBmsConfigEntry, GceBmsCoordinator
 from .entity import GceBmsEntity
-from .modbus import CHARGE_STATES, SELF_TEST_STATES, SWITCH_STATES, RbmsStatus
+from .modbus import CHARGE_STATES, SELF_TEST_STATES, SWITCH_STATES, RbmsStatus, ranked_cells
 
 PARALLEL_UPDATES = 0
 
@@ -219,14 +219,19 @@ async def async_setup_entry(
                 GceBmsCellTemperatureSensor(cells, module, sensor)
                 for sensor in range(1, (temps_per_module or len(data.temperatures)) + 1)
             )
+        entities.extend(
+            GceBmsRankedCellSensor(cells, highest, rank)
+            for highest in (False, True)
+            for rank in range(1, RANKED_CELLS + 1)
+        )
 
-    # Drop cell / temperature entities left over from a larger battery layout
+    # Drop cell entities left over from a larger battery layout or disabled cell polling
     keep = {entity.unique_id for entity in entities}
     registry = er.async_get(hass)
     for reg_entry in er.async_entries_for_config_entry(registry, entry.entry_id):
         if (
             reg_entry.domain == SENSOR_DOMAIN
-            and "_module_" in reg_entry.unique_id
+            and any(part in reg_entry.unique_id for part in ("_module_", "_cell_lowest_", "_cell_highest_"))
             and reg_entry.unique_id not in keep
         ):
             registry.async_remove(reg_entry.entity_id)
@@ -294,3 +299,36 @@ class GceBmsCellTemperatureSensor(GceBmsEntity[GceBmsCellCoordinator], SensorEnt
     def native_value(self) -> int | None:
         values = self.coordinator.data[self._module].temperatures
         return values[self._index] if self._index < len(values) else None
+
+
+class GceBmsRankedCellSensor(GceBmsEntity[GceBmsCellCoordinator], SensorEntity):
+    """N-th lowest or highest cell voltage of the cabinet, with its position as attributes."""
+
+    _attr_device_class = SensorDeviceClass.VOLTAGE
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_native_unit_of_measurement = UnitOfElectricPotential.VOLT
+    _attr_suggested_display_precision = 3
+
+    def __init__(self, coordinator: GceBmsCellCoordinator, highest: bool, rank: int) -> None:
+        key = "cell_highest" if highest else "cell_lowest"
+        super().__init__(coordinator, key, f"{key}_{rank}")
+        self._attr_translation_placeholders = {"rank": str(rank)}
+        self._highest = highest
+        self._rank = rank
+
+    def _cell(self) -> tuple[float, int, int] | None:
+        ranked = ranked_cells(self.coordinator.data)
+        if self._rank > len(ranked):
+            return None
+        return ranked[-self._rank] if self._highest else ranked[self._rank - 1]
+
+    @property
+    def native_value(self) -> float | None:
+        cell = self._cell()
+        return cell[0] if cell else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        if (cell := self._cell()) is None:
+            return None
+        return {"module": cell[1], "cell": cell[2]}
