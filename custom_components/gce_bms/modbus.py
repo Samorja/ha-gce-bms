@@ -14,6 +14,8 @@ import struct
 from .const import (
     CELL_BLOCK_SIZE,
     CELL_SLOTS,
+    REG_CONFIG_COUNT,
+    REG_CONFIG_START,
     MODULE_STRIDE,
     REG_CELL_START,
     REG_STATUS_COUNT,
@@ -109,6 +111,12 @@ class GceBmsClient:
         """Read and decode the cabinet status block."""
         return RbmsStatus.from_registers(
             await self.read_holding_registers(REG_STATUS_START, REG_STATUS_COUNT)
+        )
+
+    async def read_config(self) -> BmsConfig:
+        """Read capacity, layout and protection thresholds."""
+        return BmsConfig.from_registers(
+            await self.read_holding_registers(REG_CONFIG_START, REG_CONFIG_COUNT)
         )
 
     async def read_modules(self, modules: list[int]) -> dict[int, ModuleData]:
@@ -372,3 +380,36 @@ def ranked_cells(modules: dict[int, ModuleData]) -> list[tuple[float, int, int]]
         for index, voltage in enumerate(data.voltages)
         if voltage > 0
     )
+
+
+# (group, scale) in register order from 0x5004; each group holds THRESHOLD_LEVELS values
+THRESHOLD_GROUPS = (
+    ("cell_overvoltage", 0.001),
+    ("cell_undervoltage", 0.001),
+    ("total_overvoltage", 0.1),
+    ("total_undervoltage", 0.1),
+    ("charge_overcurrent", 0.1),
+    ("discharge_overcurrent", 0.1),
+)
+THRESHOLD_LEVELS = ("warning", "protection_1", "protection_2", "recovery")
+
+
+@dataclass(slots=True)
+class BmsConfig:
+    """Rated capacity, layout and protection thresholds (V or A)."""
+
+    capacity_ah: int
+    module_count: int
+    cells_per_module: int
+    thresholds: dict[str, float]
+
+    @classmethod
+    def from_registers(cls, r: list[int]) -> BmsConfig:
+        """Decode registers 0x5000-0x501B."""
+        if len(r) < REG_CONFIG_COUNT:
+            raise ValueError(f"Expected {REG_CONFIG_COUNT} registers, got {len(r)}")
+        thresholds = {}
+        for g, (group, scale) in enumerate(THRESHOLD_GROUPS):
+            for lvl, level in enumerate(THRESHOLD_LEVELS):
+                thresholds[f"{group}_{level}"] = round(r[4 + g * 4 + lvl] * scale, 3)
+        return cls(capacity_ah=r[0], module_count=r[1], cells_per_module=r[2], thresholds=thresholds)

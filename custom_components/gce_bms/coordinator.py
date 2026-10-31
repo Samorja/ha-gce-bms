@@ -12,13 +12,14 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
+    CONFIG_SCAN_INTERVAL,
     CONF_CELL_SCAN_INTERVAL,
     CONF_UNIT_ID,
     DEFAULT_CELL_SCAN_INTERVAL,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
 )
-from .modbus import GceBmsClient, ModbusError, ModuleData, RbmsStatus
+from .modbus import BmsConfig, GceBmsClient, ModbusError, ModuleData, RbmsStatus
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -29,6 +30,7 @@ class GceBmsRuntimeData:
 
     status: GceBmsCoordinator
     cells: GceBmsCellCoordinator | None
+    config: GceBmsConfigCoordinator | None
 
 
 type GceBmsConfigEntry = ConfigEntry[GceBmsRuntimeData]
@@ -87,5 +89,27 @@ class GceBmsCellCoordinator(DataUpdateCoordinator[dict[int, ModuleData]]):
     async def _async_update_data(self) -> dict[int, ModuleData]:
         try:
             return await self.client.read_modules(self.modules)
+        except ModbusError as err:
+            raise UpdateFailed(str(err)) from err
+
+
+class GceBmsConfigCoordinator(DataUpdateCoordinator[BmsConfig]):
+    """Reads capacity and protection thresholds, which rarely change."""
+
+    config_entry: GceBmsConfigEntry
+
+    def __init__(self, hass: HomeAssistant, entry: GceBmsConfigEntry, client: GceBmsClient) -> None:
+        super().__init__(
+            hass,
+            _LOGGER,
+            config_entry=entry,
+            name=f"{DOMAIN} {entry.data[CONF_HOST]} unit {entry.data[CONF_UNIT_ID]} config",
+            update_interval=timedelta(seconds=CONFIG_SCAN_INTERVAL),
+        )
+        self.client = client
+
+    async def _async_update_data(self) -> BmsConfig:
+        try:
+            return await self.client.read_config()
         except ModbusError as err:
             raise UpdateFailed(str(err)) from err

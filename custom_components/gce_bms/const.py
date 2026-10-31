@@ -34,3 +34,9 @@ TEMPERATURE_SLOTS = 0x40
 CELL_BLOCK_SIZE = 0x20
 MAX_MODULES = 32  # BMU status bit fields cover 32 BMUs
 RANKED_CELLS = 5  # lowest / highest cells exposed as their own sensors
+
+# Configuration and protection thresholds. Undocumented: the protocol lists 0x4000-0x4005,
+# real firmware answers at 0x5000 (capacity, layout, then 6 groups of 4 threshold levels).
+REG_CONFIG_START = 0x5000
+REG_CONFIG_COUNT = 0x1C
+CONFIG_SCAN_INTERVAL = 3600

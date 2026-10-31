@@ -18,6 +18,7 @@ for name in ("const", "modbus"):
 
 from gce_bms.modbus import (  # noqa: E402
     PROTECTION_2_EVENTS,
+    BmsConfig,
     ModuleData,
     RbmsStatus,
     decode_events,
@@ -110,3 +111,27 @@ def test_ranked_cells():
     assert ranked[0] == (3.267, 3, 28)
     assert ranked[1] == (3.3, 4, 1)
     assert ranked[-1] == (3.4, 4, 3)
+
+
+# 0x5000-0x501B captured on 2026-10-31
+CONFIG = [
+    100, 4, 50, 0,
+    3700, 3800, 3900, 3500,
+    2500, 2200, 2000, 3000,
+    7200, 7300, 7400, 6800,
+    5600, 5300, 4600, 6000,
+    400, 500, 700, 350,
+    1150, 1250, 1450, 1100,
+]
+
+
+def test_config():
+    c = BmsConfig.from_registers(CONFIG)
+    assert (c.capacity_ah, c.module_count, c.cells_per_module) == (100, 4, 50)
+    assert len(c.thresholds) == 24
+    assert c.thresholds["cell_overvoltage_warning"] == 3.7
+    assert c.thresholds["cell_undervoltage_protection_2"] == 2.0
+    assert c.thresholds["total_overvoltage_protection_1"] == 730.0
+    assert c.thresholds["total_undervoltage_recovery"] == 600.0
+    assert c.thresholds["charge_overcurrent_warning"] == 40.0
+    assert c.thresholds["discharge_overcurrent_protection_2"] == 145.0

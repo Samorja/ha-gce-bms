@@ -26,9 +26,23 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import CONF_CELLS_PER_MODULE, CONF_TEMPS_PER_MODULE, RANKED_CELLS
-from .coordinator import GceBmsCellCoordinator, GceBmsConfigEntry, GceBmsCoordinator
+from .coordinator import (
+    GceBmsCellCoordinator,
+    GceBmsConfigCoordinator,
+    GceBmsConfigEntry,
+    GceBmsCoordinator,
+)
 from .entity import GceBmsEntity
-from .modbus import CHARGE_STATES, SELF_TEST_STATES, SWITCH_STATES, RbmsStatus, ranked_cells
+from .modbus import (
+    CHARGE_STATES,
+    SELF_TEST_STATES,
+    SWITCH_STATES,
+    THRESHOLD_GROUPS,
+    THRESHOLD_LEVELS,
+    BmsConfig,
+    RbmsStatus,
+    ranked_cells,
+)
 
 PARALLEL_UPDATES = 0
 
@@ -226,6 +240,9 @@ async def async_setup_entry(
             for rank in range(1, RANKED_CELLS + 1)
         )
 
+    if (config := runtime.config) is not None:
+        entities.extend(GceBmsConfigSensor(config, description) for description in CONFIG_SENSORS)
+
     # Drop cell entities left over from a larger battery layout or disabled cell polling
     keep = {entity.unique_id for entity in entities}
     registry = er.async_get(hass)
@@ -359,3 +376,62 @@ class GceBmsRankedCellPositionSensor(GceBmsRankedCellSensor):
         if (cell := self._cell()) is None:
             return None
         return {"module": cell[1], "cell": cell[2], "voltage": cell[0]}
+
+
+@dataclass(frozen=True, kw_only=True)
+class GceBmsConfigSensorDescription(SensorEntityDescription):
+    """Describes a sensor fed from the configuration block."""
+
+    value_fn: Callable[[BmsConfig], Any]
+
+
+_THRESHOLD_UNITS = {
+    "cell_overvoltage": (SensorDeviceClass.VOLTAGE, UnitOfElectricPotential.VOLT, 3),
+    "cell_undervoltage": (SensorDeviceClass.VOLTAGE, UnitOfElectricPotential.VOLT, 3),
+    "total_overvoltage": (SensorDeviceClass.VOLTAGE, UnitOfElectricPotential.VOLT, 1),
+    "total_undervoltage": (SensorDeviceClass.VOLTAGE, UnitOfElectricPotential.VOLT, 1),
+    "charge_overcurrent": (SensorDeviceClass.CURRENT, UnitOfElectricCurrent.AMPERE, 1),
+    "discharge_overcurrent": (SensorDeviceClass.CURRENT, UnitOfElectricCurrent.AMPERE, 1),
+}
+
+
+def _threshold(key: str) -> Callable[[BmsConfig], float | None]:
+    return lambda c: c.thresholds.get(key)
+
+
+CONFIG_SENSORS: tuple[GceBmsConfigSensorDescription, ...] = (
+    GceBmsConfigSensorDescription(
+        key="rated_capacity",
+        native_unit_of_measurement="Ah",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda c: c.capacity_ah,
+    ),
+    *(
+        GceBmsConfigSensorDescription(
+            key=f"{group}_{level}",
+            device_class=_THRESHOLD_UNITS[group][0],
+            native_unit_of_measurement=_THRESHOLD_UNITS[group][1],
+            suggested_display_precision=_THRESHOLD_UNITS[group][2],
+            entity_category=EntityCategory.DIAGNOSTIC,
+            value_fn=_threshold(f"{group}_{level}"),
+        )
+        for group, _scale in THRESHOLD_GROUPS
+        for level in THRESHOLD_LEVELS
+    ),
+)
+
+
+class GceBmsConfigSensor(GceBmsEntity[GceBmsConfigCoordinator], SensorEntity):
+    """Rated capacity or a protection threshold."""
+
+    entity_description: GceBmsConfigSensorDescription
+
+    def __init__(
+        self, coordinator: GceBmsConfigCoordinator, description: GceBmsConfigSensorDescription
+    ) -> None:
+        super().__init__(coordinator, description.key)
+        self.entity_description = description
+
+    @property
+    def native_value(self) -> Any:
+        return self.entity_description.value_fn(self.coordinator.data)

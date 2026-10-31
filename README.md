@@ -54,8 +54,9 @@ The gateway must run in **Modbus TCP** mode (Modbus TCP ↔ RTU conversion), RS4
 
 - Only **RBMS** (single cabinet) data is supported. The system-level SBMS (unit `0x30`) is not.
 - The BMS answers at most `0x24` registers per request.
-- On the tested firmware the registers `0x1120–0x1123` (charge/discharge enable, max power) do not match the protocol document, so they are not exposed.
 - Cell data (`0x2000+`) does not follow the 24 cells + 8 temperatures layout in the document. Real firmware uses `0x80` registers per module: 64 cell voltage slots (mV), then 64 temperature slots (°C). Module *n* starts at `0x2000 + (n−1)·0x80`, and unused slots read `0`. The integration creates sensors only for the cells and probes in use.
+- Configuration and protection thresholds are not at `0x4000` as documented but at `0x5000–0x501B`: rated capacity (Ah), module count, cells per module, then six groups of four levels (warning, protection 1, protection 2, recovery) for cell over/undervoltage (mV), pack over/undervoltage (0.1 V) and charge/discharge overcurrent (0.1 A). The block is read once an hour. On firmware without it the threshold sensors are simply not created.
+- Registers `0x1120–0x112C` and `0x501C–0x5025` respond but their meaning is unknown, so they are not exposed.
 
 ## Entities
 
@@ -79,6 +80,8 @@ The gateway must run in **Modbus TCP** mode (Modbus TCP ↔ RTU conversion), RS4
 | Module *n* temperature *nn* | °C | one per probe, disabled by default |
 | Lowest cell 1–5 / Highest cell 1–5 | V | the five lowest and five highest cells of the cabinet; attributes `module`, `cell` |
 | Lowest / Highest cell 1–5 position | – | which cell holds that rank, e.g. `M3/C28` (module 3, cell 28); its history shows when the weakest / strongest cell changed |
+| Rated capacity | Ah | diagnostic |
+| Cell / pack overvoltage, cell / pack undervoltage, charge / discharge overcurrent – warning, protection 1, protection 2, recovery | V / A | diagnostic; 24 protection thresholds from the BMS |
 
 Recording 200 cell sensors creates a lot of history. To keep the database small, exclude them from the recorder or lengthen the cell polling interval in the integration options.
 

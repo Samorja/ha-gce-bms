@@ -185,6 +185,81 @@
       },
       "cell_highest_position": {
         "name": "Najvyšší článok {rank} – poloha"
+      },
+      "rated_capacity": {
+        "name": "Menovitá kapacita"
+      },
+      "cell_overvoltage_warning": {
+        "name": "Prepätie článku – varovanie"
+      },
+      "cell_overvoltage_protection_1": {
+        "name": "Prepätie článku – ochrana 1"
+      },
+      "cell_overvoltage_protection_2": {
+        "name": "Prepätie článku – ochrana 2"
+      },
+      "cell_overvoltage_recovery": {
+        "name": "Prepätie článku – návrat"
+      },
+      "cell_undervoltage_warning": {
+        "name": "Podpätie článku – varovanie"
+      },
+      "cell_undervoltage_protection_1": {
+        "name": "Podpätie článku – ochrana 1"
+      },
+      "cell_undervoltage_protection_2": {
+        "name": "Podpätie článku – ochrana 2"
+      },
+      "cell_undervoltage_recovery": {
+        "name": "Podpätie článku – návrat"
+      },
+      "total_overvoltage_warning": {
+        "name": "Prepätie batérie – varovanie"
+      },
+      "total_overvoltage_protection_1": {
+        "name": "Prepätie batérie – ochrana 1"
+      },
+      "total_overvoltage_protection_2": {
+        "name": "Prepätie batérie – ochrana 2"
+      },
+      "total_overvoltage_recovery": {
+        "name": "Prepätie batérie – návrat"
+      },
+      "total_undervoltage_warning": {
+        "name": "Podpätie batérie – varovanie"
+      },
+      "total_undervoltage_protection_1": {
+        "name": "Podpätie batérie – ochrana 1"
+      },
+      "total_undervoltage_protection_2": {
+        "name": "Podpätie batérie – ochrana 2"
+      },
+      "total_undervoltage_recovery": {
+        "name": "Podpätie batérie – návrat"
+      },
+      "charge_overcurrent_warning": {
+        "name": "Nadprúd nabíjania – varovanie"
+      },
+      "charge_overcurrent_protection_1": {
+        "name": "Nadprúd nabíjania – ochrana 1"
+      },
+      "charge_overcurrent_protection_2": {
+        "name": "Nadprúd nabíjania – ochrana 2"
+      },
+      "charge_overcurrent_recovery": {
+        "name": "Nadprúd nabíjania – návrat"
+      },
+      "discharge_overcurrent_warning": {
+        "name": "Nadprúd vybíjania – varovanie"
+      },
+      "discharge_overcurrent_protection_1": {
+        "name": "Nadprúd vybíjania – ochrana 1"
+      },
+      "discharge_overcurrent_protection_2": {
+        "name": "Nadprúd vybíjania – ochrana 2"
+      },
+      "discharge_overcurrent_recovery": {
+        "name": "Nadprúd vybíjania – návrat"
       }
     }
   }

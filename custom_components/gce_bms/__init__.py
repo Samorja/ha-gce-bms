@@ -8,6 +8,7 @@ from homeassistant.core import HomeAssistant
 from .const import CONF_CELL_SCAN_INTERVAL, CONF_MODULE_COUNT, DEFAULT_CELL_SCAN_INTERVAL
 from .coordinator import (
     GceBmsCellCoordinator,
+    GceBmsConfigCoordinator,
     GceBmsConfigEntry,
     GceBmsCoordinator,
     GceBmsRuntimeData,
@@ -31,7 +32,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: GceBmsConfigEntry) -> bo
         cells = GceBmsCellCoordinator(hass, entry, status.client, modules)
         await cells.async_config_entry_first_refresh()
 
-    entry.runtime_data = GceBmsRuntimeData(status=status, cells=cells)
+    # Undocumented block; firmware without it simply gets no threshold sensors
+    config: GceBmsConfigCoordinator | None = GceBmsConfigCoordinator(hass, entry, status.client)
+    await config.async_refresh()
+    if not config.last_update_success:
+        config = None
+
+    entry.runtime_data = GceBmsRuntimeData(status=status, cells=cells, config=config)
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))

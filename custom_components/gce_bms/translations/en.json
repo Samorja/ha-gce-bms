@@ -185,6 +185,81 @@
       },
       "cell_highest_position": {
         "name": "Highest cell {rank} position"
+      },
+      "rated_capacity": {
+        "name": "Rated capacity"
+      },
+      "cell_overvoltage_warning": {
+        "name": "Cell overvoltage – warning"
+      },
+      "cell_overvoltage_protection_1": {
+        "name": "Cell overvoltage – protection 1"
+      },
+      "cell_overvoltage_protection_2": {
+        "name": "Cell overvoltage – protection 2"
+      },
+      "cell_overvoltage_recovery": {
+        "name": "Cell overvoltage – recovery"
+      },
+      "cell_undervoltage_warning": {
+        "name": "Cell undervoltage – warning"
+      },
+      "cell_undervoltage_protection_1": {
+        "name": "Cell undervoltage – protection 1"
+      },
+      "cell_undervoltage_protection_2": {
+        "name": "Cell undervoltage – protection 2"
+      },
+      "cell_undervoltage_recovery": {
+        "name": "Cell undervoltage – recovery"
+      },
+      "total_overvoltage_warning": {
+        "name": "Pack overvoltage – warning"
+      },
+      "total_overvoltage_protection_1": {
+        "name": "Pack overvoltage – protection 1"
+      },
+      "total_overvoltage_protection_2": {
+        "name": "Pack overvoltage – protection 2"
+      },
+      "total_overvoltage_recovery": {
+        "name": "Pack overvoltage – recovery"
+      },
+      "total_undervoltage_warning": {
+        "name": "Pack undervoltage – warning"
+      },
+      "total_undervoltage_protection_1": {
+        "name": "Pack undervoltage – protection 1"
+      },
+      "total_undervoltage_protection_2": {
+        "name": "Pack undervoltage – protection 2"
+      },
+      "total_undervoltage_recovery": {
+        "name": "Pack undervoltage – recovery"
+      },
+      "charge_overcurrent_warning": {
+        "name": "Charge overcurrent – warning"
+      },
+      "charge_overcurrent_protection_1": {
+        "name": "Charge overcurrent – protection 1"
+      },
+      "charge_overcurrent_protection_2": {
+        "name": "Charge overcurrent – protection 2"
+      },
+      "charge_overcurrent_recovery": {
+        "name": "Charge overcurrent – recovery"
+      },
+      "discharge_overcurrent_warning": {
+        "name": "Discharge overcurrent – warning"
+      },
+      "discharge_overcurrent_protection_1": {
+        "name": "Discharge overcurrent – protection 1"
+      },
+      "discharge_overcurrent_protection_2": {
+        "name": "Discharge overcurrent – protection 2"
+      },
+      "discharge_overcurrent_recovery": {
+        "name": "Discharge overcurrent – recovery"
       }
     }
   }
