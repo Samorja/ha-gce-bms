@@ -7,14 +7,22 @@
         "data": {
           "host": "Host",
           "port": "Port",
-          "unit_id": "Modbus unit ID (cabinet number)",
+          "unit_id": "Modbus unit ID (cabinet number)"
+        },
+        "data_description": {
+          "host": "IP address of the RS485-to-Ethernet gateway.",
+          "unit_id": "Cabinet 1 = unit 1, cabinet 2 = unit 2, and so on."
+        }
+      },
+      "layout": {
+        "title": "Battery layout",
+        "description": "Detected from the cabinet: {modules} modules, {cells} cells and {temperatures} temperature probes per module. Check the values and change them if needed.",
+        "data": {
           "module_count": "Number of modules",
           "cells_per_module": "Cells per module",
           "temperatures_per_module": "Temperature probes per module"
         },
         "data_description": {
-          "host": "IP address of the RS485-to-Ethernet gateway.",
-          "unit_id": "Cabinet 1 = unit 1, cabinet 2 = unit 2, and so on.",
           "module_count": "0 = detect automatically (one module per working BMU).",
           "cells_per_module": "0 = detect automatically (cells that report a voltage).",
           "temperatures_per_module": "0 = detect automatically (probes that report a value)."

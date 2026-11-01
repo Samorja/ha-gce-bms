@@ -40,6 +40,10 @@ Copy `custom_components/gce_bms` into your `config/custom_components/` folder an
 | Port | `502` (Modbus TCP) |
 | Modbus unit ID | Cabinet number: cabinet 1 = `1`, cabinet 2 = `2`, … |
 
+In the second step the battery layout is prefilled with what the cabinet reports: the module and cell counts from the configuration block (`0x5001`, `0x5002`), the temperature probe count from the highest probe in use in any module (the BMS does not report it). Check the values and confirm.
+
+| Field | Value |
+|---|---|
 | Number of modules | `0` = automatic (one module per working BMU), or a fixed number |
 | Cells per module | `0` = automatic (cells that report a voltage), or a fixed number (max. 64) |
 | Temperature probes per module | `0` = automatic (probes that report a value), or a fixed number (max. 64) |

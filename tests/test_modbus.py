@@ -18,10 +18,12 @@ for name in ("const", "modbus"):
 
 from gce_bms.modbus import (  # noqa: E402
     PROTECTION_2_EVENTS,
+    BatteryLayout,
     BmsConfig,
     ModuleData,
     RbmsStatus,
     decode_events,
+    detect_layout,
     module_base,
     ranked_cells,
 )
@@ -135,3 +137,18 @@ def test_config():
     assert c.thresholds["total_undervoltage_recovery"] == 600.0
     assert c.thresholds["charge_overcurrent_warning"] == 40.0
     assert c.thresholds["discharge_overcurrent_protection_2"] == 145.0
+
+
+def test_detect_layout():
+    m3 = ModuleData.from_registers(3, MODULE_3)
+    # Module 4 lost its last probe (reads 0 degC) and one cell; the config block still wins
+    m4 = ModuleData(module=4, voltages=m3.voltages[:49], temperatures=m3.temperatures[:23])
+    config = BmsConfig.from_registers(CONFIG)
+    assert detect_layout({3: m3, 4: m4}, config) == BatteryLayout(4, 50, 24)
+    # Without the config block the counts come from the module data
+    assert detect_layout({3: m3, 4: m4}, None) == BatteryLayout(2, 50, 24)
+    # Implausible config values are ignored
+    config.module_count = 0
+    config.cells_per_module = 0xFFFF
+    assert detect_layout({4: m4}, config) == BatteryLayout(1, 49, 23)
+    assert detect_layout({}, None) == BatteryLayout(0, 0, 0)

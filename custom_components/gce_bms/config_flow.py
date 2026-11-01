@@ -37,7 +37,7 @@ from .modbus import GceBmsClient, ModbusConnectionError, ModbusError
 _LOGGER = logging.getLogger(__name__)
 
 
-def _user_schema(defaults: dict[str, Any], with_layout: bool = False) -> vol.Schema:
+def _user_schema(defaults: dict[str, Any]) -> vol.Schema:
     return vol.Schema(
         {
             vol.Required(CONF_HOST, default=defaults.get(CONF_HOST, vol.UNDEFINED)): str,
@@ -47,7 +47,6 @@ def _user_schema(defaults: dict[str, Any], with_layout: bool = False) -> vol.Sch
             vol.Required(
                 CONF_UNIT_ID, default=defaults.get(CONF_UNIT_ID, DEFAULT_UNIT_ID)
             ): vol.All(vol.Coerce(int), vol.Range(min=1, max=247)),
-            **(_layout_schema(defaults) if with_layout else {}),
         }
     )
 
@@ -90,10 +89,32 @@ async def _validate(data: dict[str, Any]) -> str | None:
     return None
 
 
+async def _detect_layout(data: dict[str, Any]) -> dict[str, int]:
+    """Layout options read from the cabinet; empty if detection fails (fields default to 0)."""
+    client = GceBmsClient(data[CONF_HOST], data[CONF_PORT], data[CONF_UNIT_ID])
+    try:
+        layout = await client.read_layout()
+    except ModbusError as err:
+        _LOGGER.debug("Could not detect the battery layout: %s", err)
+        return {}
+    except Exception:
+        _LOGGER.exception("Unexpected error while detecting the battery layout")
+        return {}
+    return {
+        CONF_MODULE_COUNT: layout.module_count,
+        CONF_CELLS_PER_MODULE: layout.cells_per_module,
+        CONF_TEMPS_PER_MODULE: layout.temps_per_module,
+    }
+
+
 class GceBmsConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for one RBMS battery cabinet."""
 
     VERSION = 1
+
+    def __init__(self) -> None:
+        self._data: dict[str, Any] = {}
+        self._layout: dict[str, int] = {}
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         errors: dict[str, str] = {}
@@ -103,20 +124,37 @@ class GceBmsConfigFlow(ConfigFlow, domain=DOMAIN):
             )
             self._abort_if_unique_id_configured()
             if (error := await _validate(user_input)) is None:
-                data = {k: user_input[k] for k in (CONF_HOST, CONF_PORT, CONF_UNIT_ID)}
-                options = {
-                    k: int(user_input[k])
-                    for k in (CONF_MODULE_COUNT, CONF_CELLS_PER_MODULE, CONF_TEMPS_PER_MODULE)
-                }
-                return self.async_create_entry(
-                    title=f"GCE BMS {user_input[CONF_UNIT_ID]}", data=data, options=options
-                )
+                self._data = user_input
+                self._layout = await _detect_layout(user_input)
+                return await self.async_step_layout()
             errors["base"] = error
 
         return self.async_show_form(
             step_id="user",
-            data_schema=_user_schema(user_input or {}, with_layout=True),
+            data_schema=_user_schema(user_input or {}),
             errors=errors,
+        )
+
+    async def async_step_layout(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Battery layout, prefilled with what the cabinet reports."""
+        if user_input is not None:
+            return self.async_create_entry(
+                title=f"GCE BMS {self._data[CONF_UNIT_ID]}",
+                data=self._data,
+                options={k: int(v) for k, v in user_input.items()},
+            )
+
+        layout = self._layout
+        return self.async_show_form(
+            step_id="layout",
+            data_schema=vol.Schema(_layout_schema(layout)),
+            description_placeholders={
+                "modules": str(layout.get(CONF_MODULE_COUNT) or "?"),
+                "cells": str(layout.get(CONF_CELLS_PER_MODULE) or "?"),
+                "temperatures": str(layout.get(CONF_TEMPS_PER_MODULE) or "?"),
+            },
         )
 
     async def async_step_reconfigure(

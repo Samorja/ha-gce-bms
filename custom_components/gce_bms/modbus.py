@@ -14,6 +14,7 @@ import struct
 from .const import (
     CELL_BLOCK_SIZE,
     CELL_SLOTS,
+    MAX_MODULES,
     REG_CONFIG_COUNT,
     REG_CONFIG_START,
     MODULE_STRIDE,
@@ -135,6 +136,19 @@ class GceBmsClient:
             )
             for i, module in enumerate(modules)
         }
+
+    async def read_layout(self) -> BatteryLayout:
+        """Detect module, cell and temperature probe counts of the cabinet."""
+        try:
+            config: BmsConfig | None = await self.read_config()
+        except ModbusExceptionResponse:
+            # Firmware without the configuration block
+            config = None
+        if config and 0 < config.module_count <= MAX_MODULES:
+            modules = list(range(1, config.module_count + 1))
+        else:
+            modules = (await self.read_status()).bmu_working
+        return detect_layout(await self.read_modules(modules), config)
 
 
 def _s16(value: int) -> int:
@@ -413,3 +427,31 @@ class BmsConfig:
             for lvl, level in enumerate(THRESHOLD_LEVELS):
                 thresholds[f"{group}_{level}"] = round(r[4 + g * 4 + lvl] * scale, 3)
         return cls(capacity_ah=r[0], module_count=r[1], cells_per_module=r[2], thresholds=thresholds)
+
+
+@dataclass(slots=True)
+class BatteryLayout:
+    """Module, cell and temperature probe counts; 0 = unknown."""
+
+    module_count: int
+    cells_per_module: int
+    temps_per_module: int
+
+
+def detect_layout(modules: dict[int, ModuleData], config: BmsConfig | None) -> BatteryLayout:
+    """Counts reported by the configuration block, else seen in the module data.
+
+    The BMS does not report its probe count, so it is the highest probe in use in any
+    module; a probe that happens to read 0 degC in one module is still counted.
+    """
+    cells = max((len(m.voltages) for m in modules.values()), default=0)
+    if config and 0 < config.cells_per_module <= CELL_SLOTS:
+        cells = config.cells_per_module
+    module_count = len(modules)
+    if config and 0 < config.module_count <= MAX_MODULES:
+        module_count = config.module_count
+    return BatteryLayout(
+        module_count=module_count,
+        cells_per_module=cells,
+        temps_per_module=max((len(m.temperatures) for m in modules.values()), default=0),
+    )
